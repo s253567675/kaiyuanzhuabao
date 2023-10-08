@@ -25,6 +25,7 @@ import 'package:network_proxy/network/util/attribute_keys.dart';
 import 'package:network_proxy/network/util/file_read.dart';
 import 'package:network_proxy/network/util/host_filter.dart';
 import 'package:network_proxy/network/util/request_rewrite.dart';
+import 'package:network_proxy/network/util/script_manager.dart';
 import 'package:network_proxy/utils/ip.dart';
 
 import 'channel.dart';
@@ -128,8 +129,11 @@ class HttpChannelHandler extends ChannelHandler<HttpRequest> {
     if (httpRequest.method != HttpMethod.connect) {
       log.i("[${channel.id}] ${httpRequest.method.name} ${httpRequest.requestUrl}");
 
+      //脚本替换
+      var scriptManager = await ScriptManager.instance;
+      httpRequest = scriptManager.runScript(httpRequest);
       //替换请求体
-      _rewriteBody(httpRequest);
+      rewriteBody(httpRequest);
 
       if (!HostFilter.filter(httpRequest.hostAndPort?.host)) {
         listener?.onRequest(channel, httpRequest);
@@ -152,7 +156,7 @@ class HttpChannelHandler extends ChannelHandler<HttpRequest> {
   }
 
   //替换请求体
-  _rewriteBody(HttpRequest httpRequest) {
+  rewriteBody(HttpRequest httpRequest) {
     var rewrite = requestRewrites?.findRequestRewrite(httpRequest.hostAndPort?.host, httpRequest.path(), RuleType.body);
 
     if (rewrite?.requestBody?.isNotEmpty == true) {
@@ -222,7 +226,7 @@ class HttpChannelHandler extends ChannelHandler<HttpRequest> {
   /// 异常处理
   _exceptionHandler(Channel channel, HttpRequest? request, error) {
     HostAndPort? hostAndPort = channel.getAttribute(AttributeKeys.host);
-    hostAndPort ??= HostAndPort.host(scheme:HostAndPort.httpScheme, channel.remoteAddress.host, channel.remotePort);
+    hostAndPort ??= HostAndPort.host(scheme: HostAndPort.httpScheme, channel.remoteAddress.host, channel.remotePort);
     String message = error.toString();
     HttpStatus status = HttpStatus(-1, message);
     if (error is HandshakeException) {
@@ -267,7 +271,7 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
       msg.body = utf8.encode(replaceBody!);
     }
 
-    if (!HostFilter.filter(msg.request?.hostAndPort?.host) &&  msg.request?.method != HttpMethod.connect) {
+    if (!HostFilter.filter(msg.request?.hostAndPort?.host) && msg.request?.method != HttpMethod.connect) {
       listener?.onResponse(clientChannel, msg);
     }
 

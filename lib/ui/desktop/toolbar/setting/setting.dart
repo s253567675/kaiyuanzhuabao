@@ -4,6 +4,7 @@ import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:network_proxy/network/bin/configuration.dart';
 import 'package:network_proxy/network/bin/server.dart';
 import 'package:network_proxy/network/util/system_proxy.dart';
+import 'package:network_proxy/ui/component/multi_window.dart';
 import 'package:network_proxy/ui/desktop/toolbar/setting/external_proxy.dart';
 import 'package:network_proxy/ui/desktop/toolbar/setting/request_rewrite.dart';
 import 'package:network_proxy/ui/desktop/toolbar/setting/theme.dart';
@@ -59,9 +60,10 @@ class _SettingState extends State<Setting> {
       },
       menuChildren: [
         _ProxyMenu(proxyServer: widget.proxyServer),
+        const ThemeSetting(),
         item("域名过滤", onPressed: hostFilter),
         item("请求重写", onPressed: requestRewrite),
-        const ThemeSetting(),
+        item("脚本", onPressed: () => openScriptWindow()),
         item("外部代理设置", onPressed: setExternalProxy),
         item("Github", onPressed: () => launchUrl(Uri.parse("https://github.com/wanghongenpin/network_proxy_flutter"))),
       ],
